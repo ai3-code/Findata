@@ -6,7 +6,6 @@ import logging
 
 from ..models.transaction import Transaction
 from ..models.procedure import ProcedureSummary
-from ..models.upload import Upload
 
 logger = logging.getLogger(__name__)
 
@@ -17,52 +16,42 @@ class DataProcessorService:
     def __init__(self, db: Session):
         self.db = db
 
-    def process_upload(self, df: pd.DataFrame, upload: Upload) -> Dict[str, Any]:
+    def process_upload(self, df: pd.DataFrame) -> Dict[str, Any]:
         """
         Process uploaded data: save transactions and build summaries.
 
         Args:
             df: Parsed DataFrame from Excel
-            upload: Upload record
 
         Returns:
             Processing summary
         """
         try:
             # Save raw transactions
-            transactions_count = self._save_transactions(df, upload.id)
+            transactions_count = self._save_transactions(df)
 
             # Build procedure summaries
             summaries_count = self._build_procedure_summaries(df)
 
-            # Update upload record
-            upload.rows_imported = transactions_count
-            upload.procedures_count = df["procedure_id"].nunique() if "procedure_id" in df.columns else 0
-            upload.patients_count = df["chart_number"].nunique() if "chart_number" in df.columns else 0
-            upload.upload_status = "completed"
-            upload.processed_at = datetime.utcnow()
-            self.db.commit()
+            patients_count = df["chart_number"].nunique() if "chart_number" in df.columns else 0
 
             return {
                 "transactions_imported": transactions_count,
                 "procedures_created": summaries_count,
-                "patients_count": upload.patients_count,
+                "patients_count": patients_count,
             }
 
         except Exception as e:
             logger.error(f"Error processing upload: {str(e)}")
-            upload.upload_status = "failed"
-            upload.error_message = str(e)
-            self.db.commit()
             raise
 
-    def _save_transactions(self, df: pd.DataFrame, upload_id: int) -> int:
+    def _save_transactions(self, df: pd.DataFrame) -> int:
         """Save raw transactions to database."""
         count = 0
 
         for _, row in df.iterrows():
             transaction = Transaction(
-                upload_id=upload_id,
+                upload_id=None,  # No longer tracking upload IDs
                 office_key=self._safe_int(row.get("office_key")),
                 chart_number=self._safe_int(row.get("chart_number")),
                 visit_number=row.get("visit_number"),

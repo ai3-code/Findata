@@ -2,21 +2,14 @@
 
 import { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { uploadApi } from '@/lib/api';
-import { formatDate } from '@/lib/utils';
-import type { UploadResponse, UploadSummary } from '@/types';
+import type { UploadSummary } from '@/types';
 
 export default function UploadPage() {
   const queryClient = useQueryClient();
   const [uploadResult, setUploadResult] = useState<UploadSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  // Fetch upload history
-  const { data: history, isLoading: historyLoading } = useQuery({
-    queryKey: ['uploadHistory'],
-    queryFn: () => uploadApi.getHistory(10),
-  });
 
   // Upload mutation
   const uploadMutation = useMutation({
@@ -24,21 +17,14 @@ export default function UploadPage() {
     onSuccess: (data) => {
       setUploadResult(data);
       setError(null);
-      queryClient.invalidateQueries({ queryKey: ['uploadHistory'] });
+      // Invalidate analytics queries to reflect new data
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['filterOptions'] });
+      queryClient.invalidateQueries({ queryKey: ['dynamicMatrix'] });
     },
     onError: (err: any) => {
       setError(err.response?.data?.detail || 'Upload failed. Please try again.');
       setUploadResult(null);
-    },
-  });
-
-  // Delete mutation
-  const deleteMutation = useMutation({
-    mutationFn: uploadApi.delete,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['uploadHistory'] });
     },
   });
 
@@ -172,64 +158,6 @@ export default function UploadPage() {
           </div>
         </div>
       )}
-
-      {/* Upload History */}
-      <div className="card">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Upload History</h3>
-        {historyLoading ? (
-          <p className="text-gray-500">Loading...</p>
-        ) : history && history.length > 0 ? (
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>File</th>
-                <th>Status</th>
-                <th className="text-right">Rows</th>
-                <th className="text-right">Procedures</th>
-                <th>Uploaded</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {history.map((upload: UploadResponse) => (
-                <tr key={upload.id}>
-                  <td className="font-medium">{upload.original_filename}</td>
-                  <td>
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        upload.upload_status === 'completed'
-                          ? 'bg-green-100 text-green-800'
-                          : upload.upload_status === 'failed'
-                          ? 'bg-red-100 text-red-800'
-                          : 'bg-yellow-100 text-yellow-800'
-                      }`}
-                    >
-                      {upload.upload_status}
-                    </span>
-                  </td>
-                  <td className="text-right">{upload.rows_imported}</td>
-                  <td className="text-right">{upload.procedures_count}</td>
-                  <td>{formatDate(upload.uploaded_at)}</td>
-                  <td>
-                    <button
-                      onClick={() => {
-                        if (confirm('Delete this upload?')) {
-                          deleteMutation.mutate(upload.id);
-                        }
-                      }}
-                      className="text-red-600 hover:text-red-800 text-sm"
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : (
-          <p className="text-gray-500">No uploads yet</p>
-        )}
-      </div>
 
       {/* Instructions */}
       <div className="card bg-blue-50 border-blue-200">

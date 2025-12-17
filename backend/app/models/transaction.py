@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Date, DateTime, Numeric, Boolean, ForeignKey, Text
+from sqlalchemy import Column, Integer, String, Date, DateTime, Numeric, Boolean, Text
 from sqlalchemy.sql import func
 from ..database import Base
 
@@ -9,7 +9,7 @@ class Transaction(Base):
     __tablename__ = "transactions"
 
     id = Column(Integer, primary_key=True, index=True)
-    upload_id = Column(Integer, ForeignKey("uploads.id"), nullable=False)
+    upload_id = Column(Integer, nullable=True)  # No longer linked to uploads
 
     # Identifiers
     office_key = Column(Integer, nullable=True)

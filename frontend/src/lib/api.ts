@@ -8,7 +8,6 @@ import type {
   ProcedureListResponse,
   PatientListResponse,
   FilterOptions,
-  UploadResponse,
   UploadSummary,
   DateRangeFilter,
 } from '@/types';
@@ -43,15 +42,6 @@ export const uploadApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
     return response.data;
-  },
-
-  getHistory: async (limit = 10): Promise<UploadResponse[]> => {
-    const response = await api.get('/api/upload/history', { params: { limit } });
-    return response.data;
-  },
-
-  delete: async (id: number): Promise<void> => {
-    await api.delete(`/api/upload/${id}`);
   },
 };
 
