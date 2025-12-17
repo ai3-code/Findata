@@ -72,3 +72,5 @@ backend/uploads/*
 # Excel data files (user data)
 *.xlsx
 *.xls
+
+/.claude
