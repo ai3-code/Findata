@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python:*)",
+      "Bash(dir:*)",
+      "Bash(source venv/Scripts/activate:*)",
+      "Bash(uvicorn:*)",
+      "Bash(curl:*)",
+      "Bash(netstat:*)",
+      "Bash(taskkill //F //PID 273196)",
+      "Bash(taskkill //F //PID 20468)",
+      "Bash(wmic process:*)",
+      "Bash(tasklist:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill //F //PID 270124)",
+      "Bash(taskkill:*)",
+      "Bash(taskkill //F //PID 275676)",
+      "Bash(git reset:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}
