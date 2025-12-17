@@ -10,8 +10,8 @@ class Settings(BaseSettings):
     app_name: str = "Surgery Billing Dashboard"
     debug: bool = True
 
-    # CORS
-    cors_origins: list[str] = ["http://localhost:3000", "http://localhost:3001", "http://127.0.0.1:3000", "http://127.0.0.1:3001", "http://localhost:8001", "http://127.0.0.1:8001"]
+    # CORS - allow all origins in development
+    cors_origins: list[str] = ["*"]
 
     # Upload settings
     upload_dir: str = "uploads"

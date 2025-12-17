@@ -785,6 +785,12 @@ class AnalyticsEngine:
                     'key': 'chart_number',
                     'name_key': None,
                 },
+                'procedure_id': {
+                    'column': Transaction.procedure_id,
+                    'name_column': None,
+                    'key': 'procedure_id',
+                    'name_key': None,
+                },
             }
             date_column = Transaction.date_of_service
             model = Transaction
@@ -815,6 +821,12 @@ class AnalyticsEngine:
                     'column': ProcedureSummary.chart_number,
                     'name_column': None,
                     'key': 'chart_number',
+                    'name_key': None,
+                },
+                'procedure_id': {
+                    'column': ProcedureSummary.procedure_id,
+                    'name_column': None,
+                    'key': 'procedure_id',
                     'name_key': None,
                 },
             }
@@ -854,10 +866,10 @@ class AnalyticsEngine:
 
             # Build query for this level
             if use_transaction_table:
-                # For Transaction table, count rows and sum charges/payments
+                # For Transaction table, count DISTINCT procedures and sum charges/payments
                 query_columns = [
                     config['column'],
-                    func.count(Transaction.id).label("procedure_count"),
+                    func.count(func.distinct(Transaction.procedure_id)).label("procedure_count"),
                     func.sum(charges_column).label("total_charges"),
                     func.sum(payments_column).label("total_payments"),
                 ]
@@ -937,6 +949,8 @@ class AnalyticsEngine:
                         child_key = 'surgery_types'
                     elif remaining_dims[0] == 'billing_subcategory':
                         child_key = 'billing_subcategories'
+                    elif remaining_dims[0] == 'procedure_id':
+                        child_key = 'procedures'
 
                     new_filters = {**parent_filters, current_dim: row_value}
                     item[child_key] = build_level(new_filters, remaining_dims, depth + 1)
@@ -947,7 +961,47 @@ class AnalyticsEngine:
             results.sort(key=lambda x: x['total_charges'], reverse=True)
             return results
 
-        return build_level({}, group_by)
+        # Build the grouped data
+        grouped_data = build_level({}, group_by)
+
+        # Calculate true summary totals (not affected by grouping)
+        if use_transaction_table:
+            # Get totals from Transaction table
+            summary_query = self.db.query(
+                func.count(func.distinct(Transaction.procedure_id)).label("total_procedures"),
+                func.sum(Transaction.charges).label("total_charges"),
+                func.sum(Transaction.total_payments).label("total_payments"),
+            )
+            if date_from:
+                summary_query = summary_query.filter(Transaction.date_of_service >= date_from)
+            if date_to:
+                summary_query = summary_query.filter(Transaction.date_of_service <= date_to)
+        else:
+            # Get totals from ProcedureSummary table
+            summary_query = self.db.query(
+                func.count(ProcedureSummary.id).label("total_procedures"),
+                func.sum(ProcedureSummary.total_charges).label("total_charges"),
+                func.sum(ProcedureSummary.total_payments).label("total_payments"),
+            )
+            if date_from:
+                summary_query = summary_query.filter(ProcedureSummary.date_of_service >= date_from)
+            if date_to:
+                summary_query = summary_query.filter(ProcedureSummary.date_of_service <= date_to)
+
+        summary_row = summary_query.first()
+        total_charges = float(summary_row.total_charges or 0)
+        total_payments = float(summary_row.total_payments or 0)
+        collection_rate = (total_payments / total_charges * 100) if total_charges > 0 else 0
+
+        return {
+            "data": grouped_data,
+            "summary": {
+                "total_procedures": summary_row.total_procedures or 0,
+                "total_charges": round(total_charges, 2),
+                "total_payments": round(total_payments, 2),
+                "collection_rate": round(collection_rate, 2),
+            }
+        }
 
     def _apply_filters(
         self,

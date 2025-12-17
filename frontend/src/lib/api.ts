@@ -12,7 +12,7 @@ import type {
   DateRangeFilter,
 } from '@/types';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://findata.iseyes.com';
 
 const api = axios.create({
   baseURL: API_URL,

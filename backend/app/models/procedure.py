@@ -49,7 +49,7 @@ class ProcedureSummary(Base):
     days_to_first_payment = Column(Integer, nullable=True)
 
     # Recovery metrics
-    collection_rate = Column(Numeric(5, 2), nullable=True)  # (payments / charges) * 100
+    collection_rate = Column(Numeric(10, 2), nullable=True)  # (payments / charges) * 100
 
     # Status: pending, partial, collected, written_off
     status = Column(String(20), default="pending")

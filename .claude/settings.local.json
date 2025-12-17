@@ -20,7 +20,26 @@
       "Bash(git commit:*)",
       "Bash(git remote add:*)",
       "Bash(git branch:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(docker --version:*)",
+      "Bash(docker buildx version:*)",
+      "Bash(docker-compose up:*)",
+      "Bash(docker-compose ps:*)",
+      "Bash(docker-compose logs:*)",
+      "Bash(docker-compose restart:*)",
+      "Bash(docker-compose build:*)",
+      "Bash(docker exec surgery_billing_db psql -U surgery_admin -d surgery_billing -c \"DROP TABLE IF EXISTS procedure_summary CASCADE; DROP TABLE IF EXISTS transactions CASCADE; DROP TABLE IF EXISTS uploads CASCADE;\")",
+      "Bash(docker exec:*)",
+      "Bash(nginx -v:*)",
+      "Bash(sudo dnf install:*)",
+      "Bash(sudo yum install:*)",
+      "Bash(sudo nginx:*)",
+      "Bash(sudo systemctl reload:*)",
+      "Bash(dig:*)",
+      "Bash(sudo certbot:*)",
+      "Bash(npm install:*)",
+      "Bash(docker system prune:*)",
+      "Bash(python3:*)"
     ]
   }
 }
